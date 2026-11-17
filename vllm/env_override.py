@@ -114,6 +114,7 @@ def _maybe_promote_torch_symbols_for_rocm():
     if _get_torch_version_attr("hip") is None:
         return
     try:
+        import contextlib
         import ctypes
         import glob
 
@@ -123,6 +124,10 @@ def _maybe_promote_torch_symbols_for_rocm():
         lib = os.path.join(torch_root, "lib", "libtorch_cpu.so")
         if not os.path.exists(lib):
             return
+        # On TheRock this also globalizes ROCm's libLLVM, which crashes
+        # Triton's static LLVM if Triton loads afterwards.
+        with contextlib.suppress(Exception):
+            import triton  # noqa: F401
         try:
             ctypes.CDLL(lib, mode=ctypes.RTLD_GLOBAL)
         except OSError:
