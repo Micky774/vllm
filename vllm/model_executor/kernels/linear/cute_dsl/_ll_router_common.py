@@ -18,6 +18,12 @@ def is_cutedsl_available(kernel_name: str) -> bool:
     global _cutedsl_available
     if _cutedsl_available is not None:
         return _cutedsl_available
+    from vllm.platforms import current_platform
+
+    # CuTe DSL is NVIDIA-only, but ROCm images may still ship `cutlass`.
+    if not current_platform.is_cuda():
+        _cutedsl_available = False
+        return _cutedsl_available
     try:
         import cutlass  # noqa: F401
         import cutlass.cute  # noqa: F401
